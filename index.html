@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>PixiJS Shaders</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style type="text/css">
         body {
             margin: 0;
@@ -12,11 +13,11 @@
 <body>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/pixi.js/4.3.0/pixi.min.js"></script>
 <script id="fShader" type="shader-code">
-const int wave_length = 2;
+const int wave_length = [WAVE_LENGTH];
 precision mediump float;
 varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
-uniform float time;
+uniform float time_array[wave_length];
 uniform vec2 center_array[wave_length];
 
 float sech(float x) {
@@ -26,14 +27,19 @@ float sech(float x) {
 void main(void) {
     vec2 offset = vec2(0.0, 0.0);
     for (int i = 0; i < wave_length; i++) {
-        vec2 center = center_array[i];
-        float distance = length(center - vTextureCoord);
-        float x = distance * 10.0 - (time / 4000.0) * 40.0;
-        float theta = cos(x) * sech(x) * sech(x);
-        theta /= 20.0;
-        vec2 v0 = center;
-        vec2 v1 = vec2(v0.x * cos(theta) - v0.y * sin(theta), v0.x * sin(theta) + v0.y * cos(theta));
-        offset += vec2(v1 - center);
+        float time = time_array[i];
+        if (time >= 0.0) {
+            vec2 center = center_array[i];
+            float distance = length(center - vTextureCoord);
+            float x = distance * 10.0 - (time / 4000.0) * 40.0;
+            // float theta = cos(x) * sech(x) * sech(x);
+            // theta /= 20.0;
+            // vec2 v0 = center;
+            // vec2 v1 = vec2(v0.x * cos(theta) - v0.y * sin(theta), v0.x * sin(theta) + v0.y * cos(theta));
+            // offset += vec2(v1 - center);
+            float delta = (cos(x) * sech(x) * sech(x) + sin(x) * 0.4 * ((4000.0 - time) / 4000.0)) * (time / 4.0) / 2000.0;
+            offset += (center - vTextureCoord) * delta;
+        }
     }
     vec4 pixel = texture2D(uSampler, vTextureCoord + offset);
     float offsetLength = length(offset);
@@ -43,51 +49,6 @@ void main(void) {
     gl_FragColor = pixel;
 }
 </script>
-
-<script type="text/javascript">
-    //Adapted from: http://codepen.io/davidhartley/pen/seEki?editors=0010
-
-    var width = window.innerWidth;
-    var height = window.innerHeight;
-    var renderer = new PIXI.autoDetectRenderer(width, height);//Chooses either WebGL if supported or falls back to Canvas rendering
-    document.body.appendChild(renderer.view);//Add the render view object into the page
-
-    var stage = new PIXI.Container();//The stage is the root container that will hold everything in our scene
-
-    // smoke shader
-    var uniforms = {};
-    uniforms.time = 0;
-    uniforms.center_array = {
-        type: '2fv',
-        value: [0.5, 0.5, 0.1, 0.5]
-    };
-
-    var fShaderCode = document.getElementById( 'fShader' ).innerHTML;
-    var smokeShader = new PIXI.Filter(null, fShaderCode, uniforms);
-
-    var bg = PIXI.Sprite.fromImage('image.png');
-    bg.width = width;
-    bg.height = height;
-    bg.filters = [smokeShader];
-    stage.addChild(bg);
-    var count = 0;
-    animate();
-    function animate() {
-
-        count += (1000/60);
-
-        smokeShader.uniforms.time = count;
-
-        // this is the main render call that makes pixi draw your container and its children.
-        renderer.render(stage);
-
-        // start the timer for the next animation loop
-        if (count < 4000) {
-            requestAnimationFrame(animate);
-        }
-    }
-
-
-</script>
+<script type="text/javascript" src="main.js"></script>
 </body>
 </html>
