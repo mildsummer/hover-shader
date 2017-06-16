@@ -12,43 +12,6 @@
 </head>
 <body>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/pixi.js/4.3.0/pixi.min.js"></script>
-<script id="fShader" type="shader-code">
-const int wave_length = [WAVE_LENGTH];
-precision mediump float;
-varying vec2 vTextureCoord;
-uniform sampler2D uSampler;
-uniform float time_array[wave_length];
-uniform vec2 center_array[wave_length];
-
-float sech(float x) {
-  return 2.0 / (exp(x) + exp(-x));
-}
-
-void main(void) {
-    vec2 offset = vec2(0.0, 0.0);
-    for (int i = 0; i < wave_length; i++) {
-        float time = time_array[i];
-        if (time >= 0.0) {
-            vec2 center = center_array[i];
-            float distance = length(center - vTextureCoord);
-            float x = distance * 10.0 - (time / 4000.0) * 40.0;
-            // float theta = cos(x) * sech(x) * sech(x);
-            // theta /= 20.0;
-            // vec2 v0 = center;
-            // vec2 v1 = vec2(v0.x * cos(theta) - v0.y * sin(theta), v0.x * sin(theta) + v0.y * cos(theta));
-            // offset += vec2(v1 - center);
-            float delta = (cos(x) * sech(x) * sech(x) + sin(x) * 0.4 * ((4000.0 - time) / 4000.0)) * (time / 4.0) / 2000.0;
-            offset += (center - vTextureCoord) * delta;
-        }
-    }
-    vec4 pixel = texture2D(uSampler, vTextureCoord + offset);
-    float offsetLength = length(offset);
-    pixel.r += offsetLength * 1.8;
-    pixel.g += offsetLength * 1.8;
-    pixel.b += offsetLength * 1.8;
-    gl_FragColor = pixel;
-}
-</script>
 <script type="text/javascript" src="main.js"></script>
 </body>
 </html>
